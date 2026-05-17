@@ -12,7 +12,7 @@ Production: [https://devops-monitoring-dashboard-psi.vercel.app](https://devops-
 
 Healthcheck: [https://devops-monitoring-dashboard-psi.vercel.app/api/health](https://devops-monitoring-dashboard-psi.vercel.app/api/health)
 
-The production deployment uses demo telemetry by default, so it is safe to share publicly. Vercel Web Analytics is enabled for lightweight traffic visibility.
+The production deployment is backed by Supabase seed telemetry with demo fallbacks, so it behaves like a live operations dashboard while staying safe to share publicly. Vercel Web Analytics is enabled for lightweight traffic visibility.
 
 ## Screenshots
 
@@ -82,7 +82,7 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-The project works without cloud credentials by using demo telemetry, which makes it easy for recruiters and hiring managers to review.
+The project works with Supabase-backed seed telemetry in production and falls back to demo telemetry when cloud credentials are unavailable, which makes it easy for recruiters and hiring managers to review.
 
 ## Verification
 
@@ -170,7 +170,7 @@ The image uses a multi-stage build, non-root runtime user, Next standalone outpu
 
 ## Engineering Decisions
 
-- Demo telemetry stays built in so the portfolio remains reviewable without secrets.
+- Supabase-backed seed telemetry powers production, while demo telemetry stays built in so the portfolio remains reviewable without secrets.
 - Cloud integrations are adapters, not hard-coded dashboard dependencies.
 - SSE is used before WebSockets because updates are one-way and lightweight.
 - API responses are enveloped so errors, cache status, role, and trace IDs are consistent.

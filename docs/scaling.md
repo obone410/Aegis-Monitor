@@ -21,7 +21,7 @@ This document summarizes how the portfolio app would scale into an internal star
 
 ## Security
 
-- Keep public portfolio mode on demo telemetry.
+- Keep public portfolio mode on Supabase-backed seed telemetry with demo fallback.
 - Require API-key or identity-backed auth for private environments.
 - Log every operational command into audit logs.
 - Separate viewer, responder, and admin roles.
