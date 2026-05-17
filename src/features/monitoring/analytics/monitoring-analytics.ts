@@ -2,6 +2,7 @@ import type {
   AlertEvent,
   AnomalyEvent,
   DeploymentEvent,
+  DeploymentRiskProfile,
   DeploymentStats,
   DependencyGraph,
   DoraMetrics,
@@ -10,6 +11,7 @@ import type {
   IncidentSummary,
   IncidentTimelineItem,
   LogEvent,
+  ProductionReadiness,
   RegionHealth,
   ResponsePoint,
   ServiceMetric,
@@ -116,6 +118,143 @@ function riskScore(service: ServiceMetric) {
   const health = classifyHealth(service);
   const healthWeight = health === "incident" ? 100 : health === "degraded" ? 50 : 0;
   return healthWeight + service.errorRate * 12 + service.p95LatencyMs / 20 + (100 - service.uptime) * 8;
+}
+
+const clamp = (value: number, minimum = 0, maximum = 100) =>
+  Math.max(minimum, Math.min(maximum, value));
+
+function deploymentStatusRisk(deployment: DeploymentEvent) {
+  switch (deployment.status) {
+    case "error":
+      return 65;
+    case "canceled":
+      return 42;
+    case "building":
+    case "queued":
+      return 22;
+    default:
+      return 0;
+  }
+}
+
+export function calculateDeploymentRiskProfiles(
+  deployments: DeploymentEvent[],
+  services: ServiceMetric[],
+  incidents: IncidentEvent[],
+  slos: SloSummary[]
+): DeploymentRiskProfile[] {
+  return deployments.slice(0, 6).map((deployment) => {
+    const service = services.find((candidate) => candidate.name === deployment.service);
+    const relatedIncidents = incidents.filter((incident) => incident.service === deployment.service);
+    const slo = slos.find((candidate) => candidate.service === deployment.service);
+    const serviceHealth = service ? classifyHealth(service) : "operational";
+    const serviceRisk = service
+      ? serviceHealth === "incident"
+        ? 30
+        : serviceHealth === "degraded"
+          ? 16
+          : 0
+      : 6;
+    const durationRisk = deployment.durationSeconds > 180 ? 10 : deployment.durationSeconds > 90 ? 5 : 0;
+    const sloRisk = slo ? (slo.burnRate >= 8 ? 18 : slo.burnRate >= 2 ? 9 : 0) : 4;
+    const incidentRisk = relatedIncidents.length ? 18 : 0;
+    const riskScoreValue = clamp(
+      deploymentStatusRisk(deployment) + serviceRisk + durationRisk + sloRisk + incidentRisk
+    );
+    const rollbackRecommended =
+      deployment.status === "error" || riskScoreValue >= 72 || relatedIncidents.some((incident) => incident.status !== "resolved");
+    const releaseConfidence = clamp(100 - riskScoreValue);
+
+    return {
+      deploymentId: deployment.id,
+      service: deployment.service,
+      environment: deployment.environment,
+      riskScore: riskScoreValue,
+      releaseConfidence,
+      rollbackRecommended,
+      recommendation: rollbackRecommended
+        ? "Hold promotion and prepare rollback to the previous stable deployment."
+        : riskScoreValue >= 40
+          ? "Continue canary monitoring before widening traffic."
+          : "Release health is within normal operating thresholds.",
+      correlatedIncidents: relatedIncidents.length,
+      signals: [
+        {
+          label: "Deployment state",
+          status: deployment.status === "error" ? "incident" : deployment.status === "ready" ? "operational" : "degraded",
+          detail: `${deployment.status} in ${deployment.durationSeconds}s`
+        },
+        {
+          label: "Service health",
+          status: serviceHealth,
+          detail: service ? `${service.p95LatencyMs}ms p95, ${service.errorRate}% errors` : "No matching service telemetry"
+        },
+        {
+          label: "Error budget",
+          status: slo?.status ?? "degraded",
+          detail: slo ? `${slo.errorBudgetRemaining}% remaining, ${slo.burnRate}x burn` : "No SLO data"
+        }
+      ]
+    };
+  });
+}
+
+export function calculateProductionReadiness(
+  services: ServiceMetric[],
+  deployments: DeploymentEvent[],
+  incidents: IncidentEvent[],
+  slos: SloSummary[]
+): ProductionReadiness {
+  const incidentServices = services.filter((service) => classifyHealth(service) === "incident").length;
+  const degradedServices = services.filter((service) => classifyHealth(service) === "degraded").length;
+  const failedProductionDeployments = deployments.filter(
+    (deployment) => deployment.environment === "production" && deployment.status === "error"
+  ).length;
+  const exhaustedBudgets = slos.filter((slo) => slo.errorBudgetRemaining <= 5).length;
+  const openIncidents = incidents.filter((incident) => incident.status !== "resolved").length;
+  const score = clamp(
+    100 -
+      incidentServices * 22 -
+      degradedServices * 8 -
+      failedProductionDeployments * 12 -
+      exhaustedBudgets * 10 -
+      openIncidents * 12
+  );
+  const status: ProductionReadiness["status"] =
+    score >= 85 && openIncidents === 0 ? "ready" : score >= 65 ? "watch" : "blocked";
+
+  return {
+    score,
+    status,
+    summary:
+      status === "ready"
+        ? "Production is inside release guardrails."
+        : status === "watch"
+          ? "Production is deployable with elevated monitoring."
+          : "Production promotion should pause until reliability signals recover.",
+    indicators: [
+      {
+        label: "Service health",
+        status: incidentServices ? "incident" : degradedServices ? "degraded" : "operational",
+        detail: `${services.length - degradedServices - incidentServices}/${services.length} fully operational`
+      },
+      {
+        label: "Production deploys",
+        status: failedProductionDeployments ? "degraded" : "operational",
+        detail: `${failedProductionDeployments} failed production deployments in window`
+      },
+      {
+        label: "Incident lifecycle",
+        status: openIncidents ? "incident" : "operational",
+        detail: `${openIncidents} unresolved incidents`
+      },
+      {
+        label: "Error budgets",
+        status: exhaustedBudgets ? "degraded" : "operational",
+        detail: `${exhaustedBudgets} services below 5% remaining budget`
+      }
+    ]
+  };
 }
 
 export function buildSyntheticAlert(

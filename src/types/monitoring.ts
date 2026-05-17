@@ -8,7 +8,7 @@ export type LogLevel = "info" | "warn" | "error" | "debug";
 
 export type AlertSeverity = "info" | "warning" | "critical";
 
-export type TimeWindow = "24h" | "7d";
+export type TimeWindow = "24h" | "7d" | "30d";
 
 export type ServiceMetric = {
   id: string;
@@ -185,6 +185,33 @@ export type DeploymentStats = {
   productionFailureRate: number;
 };
 
+export type DeploymentRiskSignal = {
+  label: string;
+  status: HealthStatus;
+  detail: string;
+};
+
+export type DeploymentRiskProfile = {
+  deploymentId: string;
+  service: string;
+  environment: EnvironmentName;
+  riskScore: number;
+  releaseConfidence: number;
+  rollbackRecommended: boolean;
+  recommendation: string;
+  correlatedIncidents: number;
+  signals: DeploymentRiskSignal[];
+};
+
+export type ProductionReadinessStatus = "ready" | "watch" | "blocked";
+
+export type ProductionReadiness = {
+  score: number;
+  status: ProductionReadinessStatus;
+  summary: string;
+  indicators: DeploymentRiskSignal[];
+};
+
 export type MonitoringSnapshot = {
   generatedAt: string;
   traceId: string;
@@ -202,6 +229,8 @@ export type MonitoringSnapshot = {
   regionHealth: RegionHealth[];
   dependencyGraph: DependencyGraph;
   anomalies: AnomalyEvent[];
+  deploymentRisks: DeploymentRiskProfile[];
+  productionReadiness: ProductionReadiness;
   activity: ActivityEvent[];
   featureFlags: FeatureFlags;
   dataSources: string[];

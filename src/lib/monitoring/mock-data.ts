@@ -5,7 +5,9 @@ import {
   buildRegionHealth,
   buildSloSummaries,
   buildSyntheticAlert,
+  calculateDeploymentRiskProfiles,
   calculateDoraMetrics,
+  calculateProductionReadiness,
   detectAnomalies
 } from "@/features/monitoring/analytics/monitoring-analytics";
 import type {
@@ -237,6 +239,8 @@ export function buildDemoSnapshot(now = new Date()): MonitoringSnapshot {
   const throughput = buildThroughput(now);
   const alerts = [buildSyntheticAlert(services, now.toISOString())];
   const incidents = buildIncidents(services, now);
+  const slos = buildSloSummaries(services, "24h");
+  const deploymentRisks = calculateDeploymentRiskProfiles(deployments, services, incidents, slos);
 
   return {
     traceId: `trace-demo-${now.getTime()}`,
@@ -250,11 +254,13 @@ export function buildDemoSnapshot(now = new Date()): MonitoringSnapshot {
     alerts,
     incidents,
     incidentTimeline: buildIncidentTimeline(logs, deployments, alerts, incidents),
-    slos: buildSloSummaries(services, "24h"),
+    slos,
     doraMetrics: calculateDoraMetrics(deployments, incidents),
     regionHealth: buildRegionHealth(services),
     dependencyGraph: buildDependencyGraph(services),
     anomalies: detectAnomalies(responseTimes, now.toISOString()),
+    deploymentRisks,
+    productionReadiness: calculateProductionReadiness(services, deployments, incidents, slos),
     activity: [
       {
         id: "act-canary",

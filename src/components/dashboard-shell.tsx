@@ -31,6 +31,7 @@ import { LogStream } from "./log-stream";
 import { MetricCard } from "./metric-card";
 import { LatencyChartFallback, ThroughputChartFallback } from "./monitoring-fallbacks";
 import { DependencyGraphPanel, RegionHealthPanel } from "./region-dependency-panels";
+import { ReleaseIntelligencePanel } from "./release-intelligence-panel";
 import { ServiceHealthGrid } from "./service-health-grid";
 import { SloBoard } from "./slo-board";
 
@@ -257,6 +258,11 @@ export function DashboardShell() {
       </div>
 
       <SloBoard slos={snapshot.slos} doraMetrics={snapshot.doraMetrics} />
+
+      <ReleaseIntelligencePanel
+        readiness={snapshot.productionReadiness}
+        risks={snapshot.deploymentRisks}
+      />
 
       <ServiceHealthGrid services={filteredServices} />
 

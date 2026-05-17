@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   buildSyntheticAlert,
   buildSloSummaries,
+  calculateDeploymentRiskProfiles,
   calculateDoraMetrics,
   calculateIncidentSummary,
+  calculateProductionReadiness,
   classifyHealth,
   deriveDeploymentStats
 } from "../src/lib/monitoring/analytics";
@@ -182,6 +184,33 @@ describe("monitoring analytics", () => {
       changeFailureRate: 50,
       mttrMinutes: 42,
       leadTimeMinutes: 3
+      });
+  });
+
+  it("scores deployment risk and production readiness from SRE signals", () => {
+    const incidents = [
+      {
+        id: "inc_1",
+        service: "Billing Webhooks",
+        severity: "sev1" as const,
+        status: "investigating" as const,
+        startedAt: "2026-05-17T07:00:00.000Z",
+        acknowledgedAt: "2026-05-17T07:08:00.000Z",
+        summary: "Webhook retries elevated",
+        owner: "Payments Platform"
+      }
+    ];
+    const slos = buildSloSummaries(services, "24h");
+    const riskProfiles = calculateDeploymentRiskProfiles(deployments, services, incidents, slos);
+    const readiness = calculateProductionReadiness(services, deployments, incidents, slos);
+
+    expect(riskProfiles[2]).toMatchObject({
+      service: "Billing Webhooks",
+      rollbackRecommended: true,
+      correlatedIncidents: 1
     });
+    expect(riskProfiles[2].releaseConfidence).toBeLessThan(30);
+    expect(readiness.status).toBe("blocked");
+    expect(readiness.score).toBeLessThan(65);
   });
 });

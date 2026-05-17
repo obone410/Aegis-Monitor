@@ -12,6 +12,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "security:secrets": "node scripts/check-secrets.mjs",
+    "security:audit": "npm run security:secrets && npm audit --audit-level=moderate",
+    "verify": "npm run lint && npm run typecheck && npm test && npm run security:audit && npm run build",
     "audit:prod": "npm audit --omit=dev",
     "seed:supabase": "node --env-file=.env.local scripts/seed-supabase.mjs"
   },

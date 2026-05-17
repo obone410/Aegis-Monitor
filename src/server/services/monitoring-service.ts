@@ -4,7 +4,9 @@ import {
   buildIncidents,
   buildRegionHealth,
   buildSloSummaries,
+  calculateDeploymentRiskProfiles,
   calculateDoraMetrics,
+  calculateProductionReadiness,
   detectAnomalies
 } from "@/features/monitoring/analytics/monitoring-analytics";
 import { evaluateBurnRateAlerts } from "@/features/monitoring/alerts/alert-evaluator";
@@ -82,6 +84,8 @@ export class MonitoringService {
     const throughput = buildThroughput();
     const alerts = evaluateBurnRateAlerts(services, demo.generatedAt).slice(0, 3);
     const incidents = buildIncidents(services);
+    const slos = buildSloSummaries(services, "24h");
+    const deploymentRisks = calculateDeploymentRiskProfiles(deployments, services, incidents, slos);
     const dataSources = [
       servicesResult.length || logsResult.length ? "Supabase telemetry" : "Demo telemetry stream",
       deploymentsResult.length ? "Vercel Deployments API" : "Demo deployment feed"
@@ -99,11 +103,13 @@ export class MonitoringService {
       alerts,
       incidents,
       incidentTimeline: buildIncidentTimeline(logs, deployments, alerts, incidents),
-      slos: buildSloSummaries(services, "24h"),
+      slos,
       doraMetrics: calculateDoraMetrics(deployments, incidents),
       regionHealth: buildRegionHealth(services),
       dependencyGraph: buildDependencyGraph(services),
       anomalies: detectAnomalies(responseTimes, demo.generatedAt),
+      deploymentRisks,
+      productionReadiness: calculateProductionReadiness(services, deployments, incidents, slos),
       featureFlags: {
         sseLiveUpdates: true,
         apiKeyProtection: Boolean(env.MONITORING_API_KEY || env.MONITORING_REQUIRE_API_KEY),

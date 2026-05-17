@@ -1,18 +1,187 @@
-# DevOps Deployment Monitoring Platform
+# Aegis Monitor
 
 [![Production](https://img.shields.io/badge/production-live-16a34a)](https://devops-monitoring-dashboard-psi.vercel.app)
 [![Vercel](https://img.shields.io/badge/deployed%20on-Vercel-black?logo=vercel)](https://devops-monitoring-dashboard-psi.vercel.app)
-[![Verification](https://img.shields.io/badge/local%20verification-passing-brightgreen)](#verification)
+[![Security](https://img.shields.io/badge/security-audited-2563eb)](#security-considerations)
 
-A production-minded cloud operations dashboard built as a DevOps / Platform Engineering portfolio case study. It demonstrates deployment monitoring, SRE-style observability, typed API contracts, CI/CD workflows, cloud adapters, and operational UI patterns.
+Production-grade deployment monitoring and cloud operations console for a scaling SaaS environment. Aegis Monitor combines deployment intelligence, SLO tracking, incident timelines, live telemetry, and CI/CD visibility into one operator-focused dashboard.
 
-## Live Demo
-
-Production: [https://devops-monitoring-dashboard-psi.vercel.app](https://devops-monitoring-dashboard-psi.vercel.app)
-
+Live: [https://devops-monitoring-dashboard-psi.vercel.app](https://devops-monitoring-dashboard-psi.vercel.app)  
 Healthcheck: [https://devops-monitoring-dashboard-psi.vercel.app/api/health](https://devops-monitoring-dashboard-psi.vercel.app/api/health)
 
-The production deployment is backed by Supabase seed telemetry with demo fallbacks, so it behaves like a live operations dashboard while staying safe to share publicly. Vercel Web Analytics is enabled for lightweight traffic visibility.
+## Product Overview
+
+Aegis Monitor is an internal platform engineering console for release health and reliability operations. It tracks service health, Vercel deployments, Supabase-backed telemetry, logs, alerts, SLO burn, DORA metrics, deployment risk, and production readiness.
+
+The production deployment uses Supabase seed telemetry and the Vercel Deployments API, with safe demo fallbacks so the project remains reviewable from a clean checkout.
+
+## Why This Project Exists
+
+Most portfolio dashboards show charts. This project is built to show operational judgment: how releases are verified, how incidents are detected, how SLOs influence deployment decisions, and how cloud systems are structured so teams can operate them safely.
+
+It is designed for DevOps, SRE, platform engineering, and cloud infrastructure interviews where architecture, maintainability, and production awareness matter as much as UI polish.
+
+## Architecture Overview
+
+```mermaid
+flowchart LR
+  UI["Operations Dashboard"] --> API["/api/monitoring"]
+  UI --> SSE["/api/monitoring/stream"]
+  API --> Service["MonitoringService"]
+  SSE --> Service
+  Service --> Cache["Cache Abstraction"]
+  Service --> Supabase["Supabase Telemetry Repository"]
+  Service --> Vercel["Vercel Deployment Adapter"]
+  Service --> Analytics["SLO / DORA / Risk Engines"]
+  Analytics --> Contract["Typed API Contract"]
+```
+
+Key layers:
+
+- `src/app`: Next.js routes, API handlers, healthcheck, loading, and error boundaries.
+- `src/components`: operational dashboard panels and command-center UI.
+- `src/features/monitoring`: analytics, alert evaluation, chart transformation, and telemetry processors.
+- `src/server`: configuration, env validation, logging, auth, rate limiting, cache, repositories, services, tracing, and API response contracts.
+- `src/types`: shared DTOs for frontend, API routes, and tests.
+
+## Infrastructure Design
+
+```mermaid
+flowchart TB
+  GitHub["GitHub Repository"] --> Actions["GitHub Actions"]
+  Actions --> Gates["Lint / Typecheck / Test / Audit / Build"]
+  Gates --> Preview["Vercel Preview"]
+  Gates --> Production["Vercel Production"]
+  Production --> Runtime["Next.js Runtime"]
+  Runtime --> Supabase["Supabase"]
+  Runtime --> VercelAPI["Vercel Deployments API"]
+```
+
+The platform runs as a single Vercel-hosted Next.js application with server-side provider adapters. Supabase stores service metrics and logs. Vercel provides deployment history. GitHub Actions owns verification and deployment automation.
+
+See [Deployment Topology](docs/deployment-topology.md).
+
+## Observability Philosophy
+
+The dashboard treats a successful deployment as more than a green build. A release is healthy only when service SLOs, error budgets, incident state, latency, deployment status, and dependency health stay within guardrails.
+
+Implemented observability concepts:
+
+- Service Level Objectives and Service Level Indicators.
+- Error budget remaining and burn-rate alerting.
+- MTTR, change failure rate, deployment frequency, and lead time.
+- Region health and dependency graph monitoring.
+- Deployment risk scoring and release confidence.
+- Incident lifecycle timeline and synthetic postmortem flow.
+
+See [Observability Strategy](docs/observability.md).
+
+## CI/CD Pipeline
+
+Workflows:
+
+- `.github/workflows/ci.yml`: lint, typecheck, unit tests, production dependency audit, build, Docker build.
+- `.github/workflows/security.yml`: secret-pattern scan, full dependency audit, CodeQL.
+- `.github/workflows/preview.yml`: pull request preview deployments.
+- `.github/workflows/deployment.yml`: production deployment through Vercel.
+
+The current GitHub Actions production deployment has passed with Vercel secrets configured.
+
+## Monitoring Strategy
+
+The monitoring API returns one structured snapshot used by both polling and SSE streaming. The service layer merges:
+
+- Supabase service metrics and deployment logs.
+- Vercel deployment records.
+- Derived SLO, DORA, readiness, incident, and deployment-risk analytics.
+- Demo fallback telemetry when cloud credentials are unavailable.
+
+Realtime behavior is implemented through Server-Sent Events with polling fallback.
+
+## Incident Response Flow
+
+```mermaid
+sequenceDiagram
+  participant Deploy as Deployment
+  participant Telemetry as Telemetry Processor
+  participant Alert as Alert Evaluator
+  participant Incident as Incident Timeline
+  participant Operator as Operator
+  Deploy->>Telemetry: new release event
+  Telemetry->>Alert: latency, error, SLO burn signals
+  Alert->>Incident: severity and timeline entry
+  Incident->>Operator: readiness and rollback recommendation
+```
+
+Incident views include severity, owner, status, timeline context, related logs, deployment correlation, and rollback intelligence.
+
+## Scalability Strategy
+
+The current app is intentionally compact, but the boundaries are production-shaped:
+
+- Move telemetry ingestion to a durable queue.
+- Store high-cardinality logs in a purpose-built log store.
+- Keep Supabase for relational incident, deployment, and configuration records.
+- Precompute 24h, 7d, and 30d analytics windows.
+- Replace memory cache with Redis or Upstash REST.
+- Enforce tenant-aware authorization before multi-team use.
+
+See [Scaling Strategy](docs/scaling.md) and [Telemetry Retention](docs/telemetry-retention.md).
+
+## Security Considerations
+
+Implemented:
+
+- Zod environment validation.
+- Server-only service-role usage.
+- API response envelopes and request trace IDs.
+- Rate limiting, API-key guard path, RBAC simulation, and audit logs.
+- Dependency audit and CodeQL workflows.
+- Local committed-secret scanner.
+
+Remaining before private internal use:
+
+- Rotate any token used during setup.
+- Replace simulated RBAC with SSO-backed authorization.
+- Add signed operational actions for rollback and alert acknowledgement.
+- Enable branch protection and managed secret scanning in GitHub.
+
+See [Security Notes](docs/security.md).
+
+Latest local audit summary: [Security Audit](docs/security-audit.md).
+
+## Local Development
+
+```bash
+npm ci
+npm run dev
+```
+
+Open `http://localhost:3000`.
+
+Optional cloud configuration lives in `.env.local`. Start from `.env.example` and keep secrets out of Git.
+
+## Production Deployment
+
+Production is deployed on Vercel:
+
+[https://devops-monitoring-dashboard-psi.vercel.app](https://devops-monitoring-dashboard-psi.vercel.app)
+
+Required GitHub Actions secrets:
+
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
+
+Required runtime integrations for full production behavior:
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `VERCEL_API_TOKEN`
+- `VERCEL_TEAM_ID`
+- `VERCEL_PROJECT_ID`
 
 ## Screenshots
 
@@ -24,65 +193,21 @@ Mobile operations layout:
 
 ![Mobile dashboard](public/screenshots/dashboard-mobile.png)
 
-## What This Demonstrates
+## Architecture Diagrams
 
-- Next.js 16 App Router platform architecture.
-- Typed DTOs and structured API response contracts.
-- Repository pattern for Supabase telemetry and Vercel deployment data.
-- Service layer for monitoring snapshot orchestration.
-- Zod-backed environment validation.
-- Structured JSON logging and request trace IDs.
-- Rate limiting, API-key guard, RBAC simulation, and audit logs.
-- SSE live updates with polling fallback.
-- SLOs, error budget burn, incidents, MTTR, DORA metrics, region health, dependency health, and anomaly simulation.
-- GitHub Actions CI, preview deploy, production deploy, Docker packaging, and health checks.
+- [Architecture](docs/architecture.md)
+- [Data Flow](docs/data-flow.md)
+- [Deployment Topology](docs/deployment-topology.md)
+- [Event Aggregation Pipeline](docs/event-aggregation-pipeline.md)
 
-## Tech Stack
+## Engineering Tradeoffs
 
-- Next.js 16 + React 19
-- TypeScript
-- Recharts
-- Supabase JavaScript client
-- Vercel Deployments API adapter
-- Zod
-- Vitest + ESLint
-- Docker + GitHub Actions
+The project favors believable production patterns over fake enterprise complexity. Important decisions are recorded in:
 
-## Architecture
-
-```mermaid
-flowchart LR
-  UI["Ops Dashboard"] --> API["/api/monitoring"]
-  UI --> SSE["/api/monitoring/stream"]
-  API --> Service["MonitoringService"]
-  SSE --> Service
-  Service --> Cache["CacheClient"]
-  Service --> Supabase["Supabase Repository"]
-  Service --> Vercel["Vercel Deployment Adapter"]
-  Service --> Analytics["SLO / DORA / Incident Analytics"]
-  Analytics --> Contract["Typed API Contract"]
-```
-
-Important folders:
-
-- `src/app`: routes, API endpoints, loading and error boundaries.
-- `src/components`: command center and dashboard panels.
-- `src/features/monitoring`: SRE analytics and monitoring logic.
-- `src/hooks`: retry-aware fetch and SSE live updates.
-- `src/server`: env validation, logger, API contracts, auth, cache, services, repositories.
-- `src/types`: shared DTOs and response contracts.
-- `docs`: architecture, deployment, observability, rollback, and scaling docs.
-
-## Local Development
-
-```bash
-npm ci
-npm run dev
-```
-
-Open `http://localhost:3000`.
-
-The project works with Supabase-backed seed telemetry in production and falls back to demo telemetry when cloud credentials are unavailable, which makes it easy for recruiters and hiring managers to review.
+- [ADRs](docs/adr/README.md)
+- [Engineering Tradeoffs](docs/tradeoffs.md)
+- [Rollback Strategy](docs/rollback-strategy.md)
+- [Synthetic Postmortem](docs/postmortems/2026-05-17-synthetic-billing-webhook.md)
 
 ## Verification
 
@@ -90,117 +215,22 @@ The project works with Supabase-backed seed telemetry in production and falls ba
 npm run lint
 npm run typecheck
 npm test
+npm run security:audit
 npm run audit:prod
 npm run build
 ```
 
-Or run everything:
+Or run the full local gate:
 
 ```bash
-make verify
+npm run verify
 ```
 
-## Optional Cloud Configuration
+## Future Enhancements
 
-Copy `.env.example` to `.env.local`.
-
-```bash
-VERCEL_API_TOKEN=
-VERCEL_PROJECT_ID=
-VERCEL_TEAM_ID=
-
-SUPABASE_URL=
-SUPABASE_SERVICE_ROLE_KEY=
-
-MONITORING_API_KEY=
-MONITORING_REQUIRE_API_KEY=false
-
-UPSTASH_REDIS_REST_URL=
-UPSTASH_REDIS_REST_TOKEN=
-```
-
-## Supabase Tables
-
-```sql
-create table service_metrics (
-  id text primary key,
-  name text not null,
-  region text not null,
-  environment text not null default 'production',
-  uptime numeric not null,
-  slo_target numeric not null default 99.9,
-  p95_latency_ms integer not null,
-  error_rate numeric not null,
-  requests_per_minute integer not null,
-  cpu_load integer not null,
-  memory_load integer not null,
-  dependencies text[] default '{}',
-  updated_at timestamptz not null default now()
-);
-
-create table deployment_logs (
-  id text primary key,
-  timestamp timestamptz not null default now(),
-  service text not null,
-  level text not null check (level in ('info', 'warn', 'error', 'debug')),
-  message text not null,
-  request_id text not null,
-  trace_id text
-);
-```
-
-## CI/CD
-
-The repository includes:
-
-- `.github/workflows/ci.yml`: lint, typecheck, tests, production audit, build, Docker build.
-- `.github/workflows/preview.yml`: pull request preview deployment flow.
-- `.github/workflows/deployment.yml`: protected production deployment flow.
-
-The pipeline models common platform engineering gates: correctness, dependency hygiene, build reproducibility, preview review, and production promotion.
-
-## Docker
-
-```bash
-docker build -t devops-monitoring-dashboard .
-docker run --rm -p 3000:3000 devops-monitoring-dashboard
-```
-
-The image uses a multi-stage build, non-root runtime user, Next standalone output, and `/api/health` health checks.
-
-## Engineering Decisions
-
-- Supabase-backed seed telemetry powers production, while demo telemetry stays built in so the portfolio remains reviewable without secrets.
-- Cloud integrations are adapters, not hard-coded dashboard dependencies.
-- SSE is used before WebSockets because updates are one-way and lightweight.
-- API responses are enveloped so errors, cache status, role, and trace IDs are consistent.
-- Redis is abstracted through `CacheClient`; local development uses memory cache, production can use Upstash REST.
-- UI prioritizes operator questions: health, bottleneck, what changed, what action to take.
-
-## Production Readiness Checklist
-
-- [x] Typed contracts and DTOs
-- [x] Environment validation
-- [x] Healthcheck endpoint
-- [x] Structured logging
-- [x] Request tracing
-- [x] API rate limiting
-- [x] API-key protection path
-- [x] RBAC simulation
-- [x] Audit log capture
-- [x] SLO and error-budget tracking
-- [x] CI/CD workflows
-- [x] Docker packaging
-- [x] Rollback strategy docs
-- [x] Scaling strategy docs
-
-## Documentation
-
-- [Architecture](docs/architecture.md)
-- [Observability Strategy](docs/observability.md)
-- [Deployment Guide](docs/deployment.md)
-- [Data Flow](docs/data-flow.md)
-- [Incident Simulation](docs/incident-simulation.md)
-- [Supabase Setup](docs/supabase-setup.md)
-- [Rollback Strategy](docs/rollback-strategy.md)
-- [Scaling Strategy](docs/scaling.md)
+- Persist incident lifecycle state transitions.
+- Add authenticated alert acknowledgement and rollback commands.
+- Add synthetic probes from multiple regions.
+- Add tenant-scoped projects and service ownership.
+- Add long-term analytics retention and monthly SLO reports.
+- Add OpenTelemetry export compatibility.

@@ -414,6 +414,7 @@ h3 {
 
 .service-panel,
 .slo-panel,
+.release-panel,
 .chart-grid,
 .ops-grid,
 .alerts-panel {
@@ -491,6 +492,99 @@ h3 {
   display: block;
   color: var(--ink);
   font-size: 1.45rem;
+}
+
+.readiness-score {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 18px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--green);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.readiness-score[data-status="watch"] {
+  border-left-color: var(--amber);
+}
+
+.readiness-score[data-status="blocked"] {
+  border-left-color: var(--red);
+}
+
+.readiness-score > strong {
+  font-size: clamp(2.3rem, 6vw, 4.2rem);
+  line-height: 1;
+}
+
+.readiness-score p,
+.risk-profile p,
+.empty-state {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.readiness-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.readiness-grid article,
+.risk-profile {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.readiness-grid span,
+.risk-profile span,
+.risk-profile dt {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.readiness-grid p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.risk-profile {
+  margin-top: 12px;
+}
+
+.risk-profile-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.risk-profile-head b {
+  white-space: nowrap;
+  color: var(--green);
+}
+
+.risk-profile dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0 0;
+}
+
+.risk-profile dd {
+  margin: 0;
+  font-weight: 900;
 }
 
 .service-grid {
@@ -868,6 +962,7 @@ td span {
   .overview-grid,
   .service-grid,
   .slo-grid,
+  .readiness-grid,
   .dora-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -914,12 +1009,14 @@ td span {
     font-size: 2.35rem;
   }
 
-  .overview-grid,
-  .service-grid,
-  .slo-grid,
-  .dora-strip,
-  .dependency-map,
-  .pipeline-strip {
+    .overview-grid,
+    .service-grid,
+    .slo-grid,
+    .readiness-grid,
+    .risk-profile dl,
+    .dora-strip,
+    .dependency-map,
+    .pipeline-strip {
     grid-template-columns: 1fr;
   }
 
