@@ -220,8 +220,13 @@ export function calculateProductionReadiness(
       exhaustedBudgets * 10 -
       openIncidents * 12
   );
+  const hardStop =
+    score < 25 ||
+    openIncidents >= 2 ||
+    failedProductionDeployments >= 2 ||
+    incidentServices >= 2;
   const status: ProductionReadiness["status"] =
-    score >= 85 && openIncidents === 0 ? "ready" : score >= 65 ? "watch" : "blocked";
+    score >= 85 && openIncidents === 0 ? "ready" : hardStop ? "blocked" : "watch";
 
   return {
     score,

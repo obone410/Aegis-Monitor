@@ -210,7 +210,7 @@ describe("monitoring analytics", () => {
       correlatedIncidents: 1
     });
     expect(riskProfiles[2].releaseConfidence).toBeLessThan(30);
-    expect(readiness.status).toBe("blocked");
+    expect(readiness.status).toBe("watch");
     expect(readiness.score).toBeLessThan(65);
   });
 });
