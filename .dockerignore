@@ -1,0 +1,11 @@
+.git
+.github
+.next
+node_modules
+coverage
+output
+docs/superpowers
+npm-debug.log*
+.env
+.env*.local
+README.md
