@@ -1,4 +1,4 @@
-# Deployment Guide
+# Aegis-Monitor Deployment Guide
 
 Production URL: [https://devops-monitoring-dashboard-psi.vercel.app](https://devops-monitoring-dashboard-psi.vercel.app)
 
@@ -51,8 +51,8 @@ Vercel Web Analytics is enabled on the project for lightweight production usage 
 ## Docker
 
 ```bash
-docker build -t devops-monitoring-dashboard .
-docker run --rm -p 3000:3000 devops-monitoring-dashboard
+docker build -t aegis-monitor .
+docker run --rm -p 3000:3000 aegis-monitor
 ```
 
 The image uses a multi-stage build, runs as a non-root user, and checks `/api/health`.

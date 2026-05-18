@@ -141,9 +141,9 @@ export function DashboardShell() {
       <header className="topbar">
         <div>
           <p className="eyebrow">DevOps control plane</p>
-          <h1>Deployment Monitoring Dashboard</h1>
+          <h1>Aegis-Monitor</h1>
           <p className="subtitle">
-            Production-style release visibility across uptime, errors, logs, deployment status, and latency.
+            Release health, SLO burn, incidents, telemetry, and deployment risk in one operations console.
           </p>
         </div>
         <div className="topbar-actions">

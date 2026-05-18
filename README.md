@@ -1,48 +1,50 @@
-# Aegis Monitor
+# Aegis-Monitor
 
 [![Production](https://img.shields.io/badge/production-live-16a34a)](https://devops-monitoring-dashboard-psi.vercel.app)
 [![Vercel](https://img.shields.io/badge/deployed%20on-Vercel-black?logo=vercel)](https://devops-monitoring-dashboard-psi.vercel.app)
 [![Security](https://img.shields.io/badge/security-audited-2563eb)](#security-considerations)
 
-Production-grade deployment monitoring and cloud operations console for a scaling SaaS environment. Aegis Monitor combines deployment intelligence, SLO tracking, incident timelines, live telemetry, and CI/CD visibility into one operator-focused dashboard.
+Aegis-Monitor is a production-minded cloud operations and deployment observability console. It brings release health, service telemetry, incident context, SLO burn, deployment risk, and CI/CD visibility into one internal platform-style dashboard.
 
 Live: [https://devops-monitoring-dashboard-psi.vercel.app](https://devops-monitoring-dashboard-psi.vercel.app)  
 Healthcheck: [https://devops-monitoring-dashboard-psi.vercel.app/api/health](https://devops-monitoring-dashboard-psi.vercel.app/api/health)
 
 ## Product Overview
 
-Aegis Monitor is an internal platform engineering console for release health and reliability operations. It tracks service health, Vercel deployments, Supabase-backed telemetry, logs, alerts, SLO burn, DORA metrics, deployment risk, and production readiness.
+Aegis-Monitor models the kind of internal reliability console a platform team would use to answer three operational questions:
 
-The production deployment uses Supabase seed telemetry and the Vercel Deployments API, with safe demo fallbacks so the project remains reviewable from a clean checkout.
+- Is production healthy?
+- Did the latest deployment make things worse?
+- Should the team watch, rollback, or keep releasing?
+
+The live deployment is backed by Supabase seed telemetry and the Vercel Deployments API, with demo fallbacks so the project remains reviewable without private credentials.
 
 ## Why This Project Exists
 
-Most portfolio dashboards show charts. This project is built to show operational judgment: how releases are verified, how incidents are detected, how SLOs influence deployment decisions, and how cloud systems are structured so teams can operate them safely.
-
-It is designed for DevOps, SRE, platform engineering, and cloud infrastructure interviews where architecture, maintainability, and production awareness matter as much as UI polish.
+This project is built as a DevOps, SRE, and platform engineering portfolio case study. It demonstrates more than charts: typed service boundaries, CI/CD gates, operational telemetry, incident response flow, release confidence, and production-readiness thinking.
 
 ## Architecture Overview
 
 ```mermaid
 flowchart LR
-  UI["Operations Dashboard"] --> API["/api/monitoring"]
+  UI["Aegis-Monitor UI"] --> API["/api/monitoring"]
   UI --> SSE["/api/monitoring/stream"]
   API --> Service["MonitoringService"]
   SSE --> Service
   Service --> Cache["Cache Abstraction"]
-  Service --> Supabase["Supabase Telemetry Repository"]
-  Service --> Vercel["Vercel Deployment Adapter"]
+  Service --> Supabase["Supabase Repository"]
+  Service --> Vercel["Vercel Adapter"]
   Service --> Analytics["SLO / DORA / Risk Engines"]
   Analytics --> Contract["Typed API Contract"]
 ```
 
-Key layers:
+Key folders:
 
 - `src/app`: Next.js routes, API handlers, healthcheck, loading, and error boundaries.
-- `src/components`: operational dashboard panels and command-center UI.
-- `src/features/monitoring`: analytics, alert evaluation, chart transformation, and telemetry processors.
-- `src/server`: configuration, env validation, logging, auth, rate limiting, cache, repositories, services, tracing, and API response contracts.
-- `src/types`: shared DTOs for frontend, API routes, and tests.
+- `src/components`: command center, service panels, incident views, charts, and release intelligence UI.
+- `src/features/monitoring`: SRE analytics, alert evaluation, deployment risk, and chart transformations.
+- `src/server`: env validation, logger, auth, rate limiting, repositories, services, cache, tracing, and API response contracts.
+- `src/types`: shared DTOs used by the API, UI, and tests.
 
 ## Infrastructure Design
 
@@ -50,6 +52,7 @@ Key layers:
 flowchart TB
   GitHub["GitHub Repository"] --> Actions["GitHub Actions"]
   Actions --> Gates["Lint / Typecheck / Test / Audit / Build"]
+  Gates --> Security["Secret Scan / CodeQL"]
   Gates --> Preview["Vercel Preview"]
   Gates --> Production["Vercel Production"]
   Production --> Runtime["Next.js Runtime"]
@@ -57,22 +60,20 @@ flowchart TB
   Runtime --> VercelAPI["Vercel Deployments API"]
 ```
 
-The platform runs as a single Vercel-hosted Next.js application with server-side provider adapters. Supabase stores service metrics and logs. Vercel provides deployment history. GitHub Actions owns verification and deployment automation.
-
-See [Deployment Topology](docs/deployment-topology.md).
+GitHub Actions owns verification, security scanning, preview deployment, and production deployment. Vercel hosts the app. Supabase stores service metrics and log events. Provider details stay behind server-side adapters.
 
 ## Observability Philosophy
 
-The dashboard treats a successful deployment as more than a green build. A release is healthy only when service SLOs, error budgets, incident state, latency, deployment status, and dependency health stay within guardrails.
+A green build is not the same as a healthy release. Aegis-Monitor treats deployment health as a combined signal across:
 
-Implemented observability concepts:
-
-- Service Level Objectives and Service Level Indicators.
-- Error budget remaining and burn-rate alerting.
-- MTTR, change failure rate, deployment frequency, and lead time.
-- Region health and dependency graph monitoring.
-- Deployment risk scoring and release confidence.
-- Incident lifecycle timeline and synthetic postmortem flow.
+- SLOs and SLIs
+- error budget remaining
+- burn-rate alerts
+- p95 latency and error rate
+- regional service health
+- dependency graph health
+- incident lifecycle state
+- deployment risk and release confidence
 
 See [Observability Strategy](docs/observability.md).
 
@@ -80,51 +81,49 @@ See [Observability Strategy](docs/observability.md).
 
 Workflows:
 
-- `.github/workflows/ci.yml`: lint, typecheck, unit tests, production dependency audit, build, Docker build.
-- `.github/workflows/security.yml`: secret-pattern scan, full dependency audit, CodeQL.
-- `.github/workflows/preview.yml`: pull request preview deployments.
+- `.github/workflows/ci.yml`: lint, typecheck, unit tests, production audit, build, Docker build.
+- `.github/workflows/security.yml`: committed-secret scan, dependency audit, CodeQL.
+- `.github/workflows/preview.yml`: pull request preview deployment.
 - `.github/workflows/deployment.yml`: production deployment through Vercel.
 
-The current GitHub Actions production deployment has passed with Vercel secrets configured.
+The production pipeline is configured with GitHub Actions secrets and has completed successfully.
 
 ## Monitoring Strategy
 
-The monitoring API returns one structured snapshot used by both polling and SSE streaming. The service layer merges:
+The monitoring API returns a structured snapshot consumed by polling and Server-Sent Events. It combines:
 
-- Supabase service metrics and deployment logs.
-- Vercel deployment records.
-- Derived SLO, DORA, readiness, incident, and deployment-risk analytics.
-- Demo fallback telemetry when cloud credentials are unavailable.
-
-Realtime behavior is implemented through Server-Sent Events with polling fallback.
+- Supabase service metrics and logs.
+- Vercel deployment history.
+- SLO, DORA, incident, readiness, and deployment-risk analytics.
+- Safe fallback telemetry when integrations are unavailable.
 
 ## Incident Response Flow
 
 ```mermaid
 sequenceDiagram
   participant Deploy as Deployment
-  participant Telemetry as Telemetry Processor
+  participant Telemetry as Telemetry
   participant Alert as Alert Evaluator
   participant Incident as Incident Timeline
   participant Operator as Operator
-  Deploy->>Telemetry: new release event
-  Telemetry->>Alert: latency, error, SLO burn signals
-  Alert->>Incident: severity and timeline entry
+  Deploy->>Telemetry: release event
+  Telemetry->>Alert: latency, errors, SLO burn
+  Alert->>Incident: severity and timeline context
   Incident->>Operator: readiness and rollback recommendation
 ```
 
-Incident views include severity, owner, status, timeline context, related logs, deployment correlation, and rollback intelligence.
+Incident views include severity, owner, timeline events, related logs, deployment correlation, and rollback intelligence.
 
 ## Scalability Strategy
 
-The current app is intentionally compact, but the boundaries are production-shaped:
+The current implementation is intentionally compact, but the boundaries are production-shaped:
 
-- Move telemetry ingestion to a durable queue.
-- Store high-cardinality logs in a purpose-built log store.
-- Keep Supabase for relational incident, deployment, and configuration records.
-- Precompute 24h, 7d, and 30d analytics windows.
+- Replace in-process queue simulation with durable event ingestion.
+- Move high-cardinality logs to a purpose-built log store.
+- Keep Supabase for relational incident, deployment, and configuration data.
+- Precompute 24h, 7d, and 30d analytical windows.
 - Replace memory cache with Redis or Upstash REST.
-- Enforce tenant-aware authorization before multi-team use.
+- Add tenant-aware authorization before multi-team use.
 
 See [Scaling Strategy](docs/scaling.md) and [Telemetry Retention](docs/telemetry-retention.md).
 
@@ -133,22 +132,13 @@ See [Scaling Strategy](docs/scaling.md) and [Telemetry Retention](docs/telemetry
 Implemented:
 
 - Zod environment validation.
-- Server-only service-role usage.
+- Server-only Supabase service-role usage.
 - API response envelopes and request trace IDs.
-- Rate limiting, API-key guard path, RBAC simulation, and audit logs.
-- Dependency audit and CodeQL workflows.
+- Rate limiting, API-key guard support, RBAC simulation, and audit logs.
+- GitHub security workflow with secret scanning, dependency audit, and CodeQL.
 - Local committed-secret scanner.
 
-Remaining before private internal use:
-
-- Rotate any token used during setup.
-- Replace simulated RBAC with SSO-backed authorization.
-- Add signed operational actions for rollback and alert acknowledgement.
-- Enable branch protection and managed secret scanning in GitHub.
-
-See [Security Notes](docs/security.md).
-
-Latest local audit summary: [Security Audit](docs/security-audit.md).
+Security audit: [docs/security-audit.md](docs/security-audit.md)
 
 ## Local Development
 
@@ -159,7 +149,7 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-Optional cloud configuration lives in `.env.local`. Start from `.env.example` and keep secrets out of Git.
+Optional runtime configuration lives in `.env.local`. Keep secrets out of Git.
 
 ## Production Deployment
 
@@ -173,7 +163,7 @@ Required GitHub Actions secrets:
 - `VERCEL_ORG_ID`
 - `VERCEL_PROJECT_ID`
 
-Required runtime integrations for full production behavior:
+Runtime integrations:
 
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
@@ -202,9 +192,9 @@ Mobile operations layout:
 
 ## Engineering Tradeoffs
 
-The project favors believable production patterns over fake enterprise complexity. Important decisions are recorded in:
+Aegis-Monitor favors believable production patterns over fake enterprise complexity.
 
-- [ADRs](docs/adr/README.md)
+- [Architecture Decision Records](docs/adr/README.md)
 - [Engineering Tradeoffs](docs/tradeoffs.md)
 - [Rollback Strategy](docs/rollback-strategy.md)
 - [Synthetic Postmortem](docs/postmortems/2026-05-17-synthetic-billing-webhook.md)
@@ -212,19 +202,11 @@ The project favors believable production patterns over fake enterprise complexit
 ## Verification
 
 ```bash
-npm run lint
-npm run typecheck
-npm test
-npm run security:audit
-npm run audit:prod
-npm run build
-```
-
-Or run the full local gate:
-
-```bash
 npm run verify
+npm run audit:prod
 ```
+
+`npm run verify` runs linting, TypeScript, unit tests, secret scanning, dependency audit, and production build.
 
 ## Future Enhancements
 
@@ -232,5 +214,5 @@ npm run verify
 - Add authenticated alert acknowledgement and rollback commands.
 - Add synthetic probes from multiple regions.
 - Add tenant-scoped projects and service ownership.
-- Add long-term analytics retention and monthly SLO reports.
+- Add long-term SLO reporting.
 - Add OpenTelemetry export compatibility.

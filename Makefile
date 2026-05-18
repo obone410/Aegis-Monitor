@@ -24,7 +24,7 @@ build:
 verify: lint typecheck test audit build
 
 docker-build:
-	docker build -t devops-monitoring-dashboard .
+	docker build -t aegis-monitor .
 
 docker-run:
-	docker run --rm -p 3000:3000 devops-monitoring-dashboard
+	docker run --rm -p 3000:3000 aegis-monitor

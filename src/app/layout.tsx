@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "DevOps Deployment Monitoring Dashboard",
+  title: "Aegis-Monitor",
   description:
-    "A recruiter-ready monitoring dashboard for deployments, uptime, logs, API latency, and alert simulation.",
+    "A production-minded cloud operations and deployment observability console.",
   icons: {
     icon: [{ url: "/favicon.svg", type: "image/svg+xml" }]
   }

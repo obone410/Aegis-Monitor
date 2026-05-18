@@ -50,4 +50,4 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build image
-        run: docker build -t devops-monitoring-dashboard:${{ github.sha }} .
+        run: docker build -t aegis-monitor:${{ github.sha }} .
