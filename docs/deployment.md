@@ -39,6 +39,7 @@ Required GitHub secrets for the preview and production workflows:
 
 Optional application secrets:
 
+- `APP_NAME`
 - `VERCEL_API_TOKEN`
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`

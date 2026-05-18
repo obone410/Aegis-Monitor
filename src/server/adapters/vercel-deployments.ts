@@ -52,14 +52,14 @@ function normalizeEnvironment(target: string | null | undefined): DeploymentEven
   return "preview";
 }
 
-function mapVercelDeployment(deployment: VercelDeployment): DeploymentEvent {
+function mapVercelDeployment(deployment: VercelDeployment, serviceName: string): DeploymentEvent {
   const createdAtMs = deployment.createdAt ?? deployment.created ?? Date.now();
   const endAtMs = deployment.ready ?? deployment.buildingAt ?? createdAtMs;
   const status = normalizeDeploymentStatus(deployment.readyState ?? deployment.state);
 
   return {
     id: deployment.uid ?? deployment.id ?? `vercel-${createdAtMs}`,
-    service: deployment.name ?? "Vercel Project",
+    service: serviceName,
     environment: normalizeEnvironment(deployment.target),
     status,
     commitSha: deployment.meta?.githubCommitSha?.slice(0, 7) ?? "unknown",
@@ -87,14 +87,16 @@ export class VercelDeploymentRepository implements DeploymentRepository {
     return new VercelDeploymentRepository(
       env.VERCEL_API_TOKEN,
       env.VERCEL_PROJECT_ID,
-      env.VERCEL_TEAM_ID
+      env.VERCEL_TEAM_ID,
+      env.APP_NAME
     );
   }
 
   constructor(
     private readonly token: string,
     private readonly projectId: string,
-    private readonly teamId?: string
+    private readonly teamId?: string,
+    private readonly serviceName = "Aegis-Monitor"
   ) {}
 
   async listDeployments() {
@@ -122,6 +124,6 @@ export class VercelDeploymentRepository implements DeploymentRepository {
     }
 
     const body = (await response.json()) as { deployments?: VercelDeployment[] };
-    return body.deployments?.map(mapVercelDeployment) ?? [];
+    return body.deployments?.map((deployment) => mapVercelDeployment(deployment, this.serviceName)) ?? [];
   }
 }

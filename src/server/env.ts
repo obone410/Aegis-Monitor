@@ -6,6 +6,7 @@ const booleanString = z
   .transform((value) => value === "true");
 
 const envSchema = z.object({
+  APP_NAME: z.string().min(1).default("Aegis-Monitor"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   VERCEL_API_TOKEN: z.string().min(1).optional(),
   VERCEL_PROJECT_ID: z.string().min(1).optional(),

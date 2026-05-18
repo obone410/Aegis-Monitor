@@ -165,6 +165,7 @@ Required GitHub Actions secrets:
 
 Runtime integrations:
 
+- `APP_NAME`
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `NEXT_PUBLIC_SUPABASE_URL`
