@@ -105,7 +105,7 @@ export function useMonitoringSnapshot({ environment, live }: UseMonitoringSnapsh
       return () => window.clearInterval(interval);
     }
 
-    const source = new EventSource("/api/monitoring/stream");
+    const source = new EventSource(`/api/monitoring/stream?environment=${environment}`);
     eventSourceRef.current = source;
 
     source.addEventListener("snapshot", (event) => {
@@ -128,7 +128,7 @@ export function useMonitoringSnapshot({ environment, live }: UseMonitoringSnapsh
       source.close();
       eventSourceRef.current = null;
     };
-  }, [live, refresh]);
+  }, [environment, live, refresh]);
 
   return {
     ...state,

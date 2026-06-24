@@ -17,7 +17,7 @@ Aegis-Monitor models the kind of internal reliability console a platform team wo
 - Did the latest deployment make things worse?
 - Should the team watch, rollback, or keep releasing?
 
-The live deployment is backed by Supabase seed telemetry and the Vercel Deployments API, with demo fallbacks so the project remains reviewable without private credentials.
+The platform supports Supabase seed telemetry and the Vercel Deployments API, with demo fallbacks so the project remains reviewable when private integrations are unavailable.
 
 ## Why This Project Exists
 
