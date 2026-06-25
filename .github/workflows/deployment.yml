@@ -38,6 +38,12 @@ jobs:
           npm run audit:prod
           npm run build
 
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser smoke tests
+        run: npm run test:e2e
+
       - name: Deploy production
         run: |
           npm install --global vercel

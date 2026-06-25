@@ -9,6 +9,8 @@ Aegis-Monitor is a production-minded cloud operations and deployment observabili
 Live: [https://devops-monitoring-dashboard-psi.vercel.app](https://devops-monitoring-dashboard-psi.vercel.app)  
 Healthcheck: [https://devops-monitoring-dashboard-psi.vercel.app/api/health](https://devops-monitoring-dashboard-psi.vercel.app/api/health)
 
+The healthcheck is a readiness endpoint: it validates the runtime environment and confirms configured telemetry dependencies are reachable.
+
 ## Product Overview
 
 Aegis-Monitor models the kind of internal reliability console a platform team would use to answer three operational questions:
@@ -82,6 +84,7 @@ See [Observability Strategy](docs/observability.md).
 Workflows:
 
 - `.github/workflows/ci.yml`: lint, typecheck, unit tests, production audit, build, Docker build.
+- CI also runs Playwright smoke tests against a production build to verify the dashboard render path and SSE environment streaming.
 - `.github/workflows/security.yml`: committed-secret scan, dependency audit, CodeQL.
 - `.github/workflows/preview.yml`: pull request preview deployment.
 - `.github/workflows/deployment.yml`: production deployment through Vercel.
@@ -217,3 +220,4 @@ npm run audit:prod
 - Add tenant-scoped projects and service ownership.
 - Add long-term SLO reporting.
 - Add OpenTelemetry export compatibility.
+- Execute the [major dependency upgrade plan](docs/major-upgrade-plan.md).

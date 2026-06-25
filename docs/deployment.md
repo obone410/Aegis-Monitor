@@ -19,6 +19,7 @@ npm run typecheck
 npm test
 npm run audit:prod
 npm run build
+npm run test:e2e
 ```
 
 Or:
@@ -43,9 +44,13 @@ Optional application secrets:
 - `VERCEL_API_TOKEN`
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `MONITORING_API_KEY`
 - `UPSTASH_REDIS_REST_URL`
 - `UPSTASH_REDIS_REST_TOKEN`
+
+`/api/health` is a readiness check. It returns `degraded` when Supabase is configured but unreachable, and `ok` when Supabase is either reachable or intentionally not configured.
 
 Vercel Web Analytics is enabled on the project for lightweight production usage visibility.
 

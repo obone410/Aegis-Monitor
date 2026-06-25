@@ -1,21 +1,12 @@
 import { NextResponse } from "next/server";
-import { getEnvIssues } from "@/server/env";
+import { getReadinessReport } from "@/server/readiness";
 
 export const dynamic = "force-dynamic";
 
-export function GET() {
-  const envIssues = getEnvIssues();
+export async function GET() {
+  const report = await getReadinessReport();
 
-  return NextResponse.json({
-    status: envIssues.length ? "degraded" : "ok",
-    checkedAt: new Date().toISOString(),
-    checks: {
-      app: "ok",
-      environment: envIssues.length ? "degraded" : "ok"
-    },
-    envIssues: envIssues.map((issue) => ({
-      path: issue.path.join("."),
-      message: issue.message
-    }))
+  return NextResponse.json(report, {
+    status: report.status === "ok" ? 200 : 503
   });
 }

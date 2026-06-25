@@ -37,6 +37,22 @@ Set these in Vercel:
 
 Production and local-development env vars are already supported by the app. Preview env vars should be attached after the GitHub project is linked to Vercel so branch targeting is available.
 
+## 4. Verify Readiness
+
+The healthcheck validates configured telemetry dependencies:
+
+```bash
+curl https://your-deployment.example.com/api/health
+```
+
+Expected states:
+
+- `ok`: runtime is healthy and configured Supabase telemetry is reachable.
+- `ok` with `telemetryStore.status = "disabled"`: Supabase is not configured and the app is intentionally using demo telemetry.
+- `degraded`: Supabase is configured but unreachable, unauthorized, or missing the expected tables.
+
+If a Supabase project was deleted, paused, or rotated, update Vercel with the new project URL and keys, then run `npm run seed:supabase` locally against the new project.
+
 ## Security Note
 
 The service-role key bypasses row-level security and must never be exposed in client code. Rotate it if it is pasted into chat, logs, or a public issue.
