@@ -53,6 +53,21 @@ Expected states:
 
 If a Supabase project was deleted, paused, or rotated, update Vercel with the new project URL and keys, then run `npm run seed:supabase` locally against the new project.
 
+## 5. Scheduled Telemetry Heartbeat
+
+The repository includes `.github/workflows/supabase-heartbeat.yml`, which runs once per day and writes a small operational heartbeat to Supabase. It refreshes `service_metrics.updated_at` and upserts one daily `deployment_logs` row with an id like `heartbeat_2026-06-25`.
+
+Required GitHub Actions secrets:
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+Run it manually from GitHub Actions after changing Supabase credentials, or locally with:
+
+```bash
+node --env-file=.env.local scripts/supabase-heartbeat.mjs
+```
+
 ## Security Note
 
 The service-role key bypasses row-level security and must never be exposed in client code. Rotate it if it is pasted into chat, logs, or a public issue.

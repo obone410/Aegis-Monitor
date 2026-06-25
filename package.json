@@ -18,7 +18,8 @@
     "security:audit": "npm run security:secrets && npm audit --audit-level=moderate",
     "verify": "npm run lint && npm run typecheck && npm test && npm run security:audit && npm run build",
     "audit:prod": "npm audit --omit=dev",
-    "seed:supabase": "node --env-file=.env.local scripts/seed-supabase.mjs"
+    "seed:supabase": "node --env-file=.env.local scripts/seed-supabase.mjs",
+    "heartbeat:supabase": "node scripts/supabase-heartbeat.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.108.2",
