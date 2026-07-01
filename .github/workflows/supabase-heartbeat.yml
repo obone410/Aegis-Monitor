@@ -2,7 +2,7 @@ name: Supabase Telemetry Heartbeat
 
 on:
   schedule:
-    - cron: "23 8 * * *"
+    - cron: "23 */6 * * *"
   workflow_dispatch:
 
 permissions:
@@ -12,6 +12,7 @@ jobs:
   heartbeat:
     name: Refresh Supabase telemetry
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4

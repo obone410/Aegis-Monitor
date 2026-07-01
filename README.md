@@ -88,7 +88,7 @@ Workflows:
 - `.github/workflows/security.yml`: committed-secret scan, dependency audit, CodeQL.
 - `.github/workflows/preview.yml`: pull request preview deployment.
 - `.github/workflows/deployment.yml`: production deployment through Vercel.
-- `.github/workflows/supabase-heartbeat.yml`: scheduled telemetry refresh for Supabase-backed monitoring data.
+- `.github/workflows/supabase-heartbeat.yml`: six-hour telemetry refresh with bounded retries for Supabase-backed monitoring data.
 
 The production pipeline is configured with GitHub Actions secrets and has completed successfully.
 

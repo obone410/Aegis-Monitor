@@ -11,6 +11,8 @@ const headers = {
   "Content-Type": "application/json",
   Prefer: "resolution=merge-duplicates"
 };
+const maxAttempts = 3;
+const requestTimeoutMs = 10_000;
 
 const now = new Date();
 const isoNow = now.toISOString();
@@ -94,14 +96,37 @@ const logs = [
 ];
 
 async function upsert(table, rows, conflictTarget) {
-  const response = await fetch(`${supabaseUrl}/rest/v1/${table}?on_conflict=${conflictTarget}`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(rows)
-  });
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    let response;
 
-  if (!response.ok) {
-    throw new Error(`${table} heartbeat failed: ${response.status} ${await response.text()}`);
+    try {
+      response = await fetch(`${supabaseUrl}/rest/v1/${table}?on_conflict=${conflictTarget}`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(rows),
+        signal: AbortSignal.timeout(requestTimeoutMs)
+      });
+    } catch (error) {
+      if (attempt === maxAttempts) {
+        throw error;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 500 * 2 ** (attempt - 1)));
+      continue;
+    }
+
+    if (response.ok) {
+      return;
+    }
+
+    const responseBody = await response.text();
+    const isTransient = response.status === 429 || response.status >= 500;
+
+    if (!isTransient || attempt === maxAttempts) {
+      throw new Error(`${table} heartbeat failed: ${response.status} ${responseBody}`);
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 500 * 2 ** (attempt - 1)));
   }
 }
 

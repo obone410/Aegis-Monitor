@@ -47,15 +47,15 @@ curl https://your-deployment.example.com/api/health
 
 Expected states:
 
-- `ok`: runtime is healthy and configured Supabase telemetry is reachable.
+- `ok`: runtime is healthy, Supabase is reachable, and telemetry is less than 18 hours old.
 - `ok` with `telemetryStore.status = "disabled"`: Supabase is not configured and the app is intentionally using demo telemetry.
-- `degraded`: Supabase is configured but unreachable, unauthorized, or missing the expected tables.
+- `degraded`: Supabase is configured but unreachable, unauthorized, missing the expected tables, or serving stale telemetry.
 
 If a Supabase project was deleted, paused, or rotated, update Vercel with the new project URL and keys, then run `npm run seed:supabase` locally against the new project.
 
 ## 5. Scheduled Telemetry Heartbeat
 
-The repository includes `.github/workflows/supabase-heartbeat.yml`, which runs once per day and writes a small operational heartbeat to Supabase. It refreshes `service_metrics.updated_at` and upserts one daily `deployment_logs` row with an id like `heartbeat_2026-06-25`.
+The repository includes `.github/workflows/supabase-heartbeat.yml`, which runs every six hours and writes a small operational heartbeat to Supabase. Each run refreshes `service_metrics.updated_at` and upserts a single bounded daily `deployment_logs` row with an id like `heartbeat_2026-06-25`. Transient rate-limit and server failures are retried up to three times.
 
 Required GitHub Actions secrets:
 
