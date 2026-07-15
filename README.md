@@ -203,6 +203,7 @@ Aegis-Monitor favors believable production patterns over fake enterprise complex
 - [Engineering Tradeoffs](docs/tradeoffs.md)
 - [Rollback Strategy](docs/rollback-strategy.md)
 - [Synthetic Postmortem](docs/postmortems/2026-05-17-synthetic-billing-webhook.md)
+- [Hermes Handover](docs/hermes-handover.md)
 
 ## Verification
 
