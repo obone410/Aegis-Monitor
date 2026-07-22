@@ -55,18 +55,31 @@ If a Supabase project was deleted, paused, or rotated, update Vercel with the ne
 
 ## 5. Scheduled Telemetry Heartbeat
 
-The repository includes `.github/workflows/supabase-heartbeat.yml`, which runs every six hours and writes a small operational heartbeat to Supabase. Each run refreshes `service_metrics.updated_at` and upserts a single bounded daily `deployment_logs` row with an id like `heartbeat_2026-06-25`. Transient rate-limit and server failures are retried up to three times.
+The repository includes two automatic heartbeat paths:
+
+- `.github/workflows/supabase-heartbeat.yml` runs every six hours and writes a small operational heartbeat to Supabase.
+- `vercel.json` registers a daily production Vercel Cron fallback at `/api/cron/supabase-heartbeat`.
+
+Each heartbeat refreshes `service_metrics.updated_at` and upserts a single bounded daily `deployment_logs` row with an id like `heartbeat_2026-06-25`. Transient rate-limit and server failures are retried up to three times.
 
 Required GitHub Actions secrets:
 
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
 
+Required Vercel environment variables:
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `CRON_SECRET`
+
 Run it manually from GitHub Actions after changing Supabase credentials, or locally with:
 
 ```bash
-node --env-file=.env.local scripts/supabase-heartbeat.mjs
+node --env-file=.env.local --experimental-strip-types scripts/supabase-heartbeat.ts
 ```
+
+The cron route must receive `Authorization: Bearer <CRON_SECRET>`. Vercel sends that header automatically when `CRON_SECRET` is configured on the project.
 
 ## Security Note
 

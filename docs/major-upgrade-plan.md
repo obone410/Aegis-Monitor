@@ -4,7 +4,7 @@ This project intentionally keeps major dependency upgrades separate from routine
 
 ## Candidates
 
-- TypeScript 6
+- TypeScript 7
 - ESLint 10
 - lucide-react 1.x
 - @types/node 26

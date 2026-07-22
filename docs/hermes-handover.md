@@ -46,7 +46,7 @@ npm run test:e2e
 For local Supabase-backed work, create `.env.local` with the variable names listed below. Do not commit `.env.local`.
 
 ```bash
-node --env-file=.env.local scripts/supabase-heartbeat.mjs
+node --env-file=.env.local --experimental-strip-types scripts/supabase-heartbeat.ts
 curl https://devops-monitoring-dashboard-psi.vercel.app/api/health
 ```
 
@@ -85,12 +85,15 @@ The Supabase service-role key bypasses RLS. Keep it server-side only and rotate 
 - `src/features/monitoring/alerts/alert-evaluator.ts`: alert and burn-rate evaluation.
 - `src/features/monitoring/charts/chart-transformers.ts`: chart DTO formatting.
 - `src/lib/monitoring/mock-data.ts`: realistic fallback telemetry.
-- `scripts/supabase-heartbeat.mjs`: scheduled Supabase activity and telemetry freshness writer.
+- `scripts/supabase-heartbeat.ts`: scheduled Supabase activity and telemetry freshness writer.
+- `src/server/services/supabase-heartbeat.ts`: shared heartbeat payload and Supabase upsert service.
+- `src/app/api/cron/supabase-heartbeat/route.ts`: protected Vercel Cron fallback.
 - `.github/workflows/ci.yml`: lint, typecheck, unit tests, audit, build, Playwright smoke, Docker build.
 - `.github/workflows/security.yml`: secret scan, dependency audit, CodeQL.
 - `.github/workflows/preview.yml`: Vercel preview deployment.
 - `.github/workflows/deployment.yml`: Vercel production deployment.
 - `.github/workflows/supabase-heartbeat.yml`: six-hour telemetry heartbeat.
+- `vercel.json`: daily Vercel Cron fallback.
 - `docs/supabase-setup.md`: Supabase setup, seeding, readiness, and heartbeat notes.
 
 ## Operational Checks
@@ -115,7 +118,12 @@ The freshness threshold is defined in `src/server/readiness.ts`. At handoff time
 
 ## Supabase Heartbeat
 
-The project uses `.github/workflows/supabase-heartbeat.yml` to send activity to Supabase every six hours. The heartbeat:
+The project uses two schedulers to send activity to Supabase:
+
+- `.github/workflows/supabase-heartbeat.yml` runs every six hours.
+- Vercel Cron invokes `/api/cron/supabase-heartbeat` once per day in production.
+
+The heartbeat:
 
 - updates four `service_metrics` rows,
 - upserts one bounded daily `deployment_logs` row like `heartbeat_2026-07-15`,
@@ -125,7 +133,7 @@ The project uses `.github/workflows/supabase-heartbeat.yml` to send activity to 
 Manual local run:
 
 ```bash
-node --env-file=.env.local scripts/supabase-heartbeat.mjs
+node --env-file=.env.local --experimental-strip-types scripts/supabase-heartbeat.ts
 ```
 
 Manual GitHub run:
@@ -148,13 +156,10 @@ Do not hardcode project IDs or tokens into source. Use GitHub Actions secrets an
 
 Highest-value continuation items:
 
-1. Add a Vercel Cron fallback for the Supabase heartbeat so GitHub schedule delays are not the only keepalive mechanism.
-2. Add an authenticated `/api/cron/supabase-heartbeat` route protected by `CRON_SECRET`.
-3. Move shared heartbeat write logic into a server utility so the GitHub script and Vercel Cron route reuse one implementation.
-4. Add a small status panel or README badge showing the last successful heartbeat and readiness freshness.
-5. Add external uptime monitoring from a provider such as Better Stack, UptimeRobot, or Vercel Observability.
-6. Rotate any credentials that were ever pasted into an AI chat or public surface, then update GitHub and Vercel secrets.
-7. Execute the dependency roadmap in `docs/major-upgrade-plan.md` when TypeScript 6, ESLint 10, lucide 1.x, or Node type upgrades are safe.
+1. Add a small status panel or README badge showing the last successful heartbeat and readiness freshness.
+2. Add external uptime monitoring from a provider such as Better Stack, UptimeRobot, or Vercel Observability.
+3. Rotate any credentials that were ever pasted into an AI chat or public surface, then update GitHub and Vercel secrets.
+4. Execute the dependency roadmap in `docs/major-upgrade-plan.md` when TypeScript 6, ESLint 10, lucide 1.x, or Node type upgrades are safe.
 
 ## Change Policy For The Next Agent
 

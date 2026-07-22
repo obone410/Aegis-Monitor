@@ -17,6 +17,7 @@ const envSchema = z.object({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1).optional(),
   MONITORING_API_KEY: z.string().min(12).optional(),
   MONITORING_REQUIRE_API_KEY: booleanString,
+  CRON_SECRET: z.string().min(16).optional(),
   UPSTASH_REDIS_REST_URL: z.url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional()
 });

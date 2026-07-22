@@ -1,9 +1,12 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
-const trackedFiles = execFileSync("git", ["ls-files"], { encoding: "utf8" })
+const trackedFiles = execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard"], {
+  encoding: "utf8"
+})
   .split(/\r?\n/)
   .filter(Boolean)
+  .filter((file) => existsSync(file))
   .filter((file) => !file.endsWith(".png"))
   .filter((file) => file !== "scripts/check-secrets.mjs");
 

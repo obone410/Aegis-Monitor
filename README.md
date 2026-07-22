@@ -89,6 +89,7 @@ Workflows:
 - `.github/workflows/preview.yml`: pull request preview deployment.
 - `.github/workflows/deployment.yml`: production deployment through Vercel.
 - `.github/workflows/supabase-heartbeat.yml`: six-hour telemetry refresh with bounded retries for Supabase-backed monitoring data.
+- `vercel.json`: daily production Vercel Cron fallback that invokes `/api/cron/supabase-heartbeat`.
 
 The production pipeline is configured with GitHub Actions secrets and has completed successfully.
 
@@ -177,6 +178,7 @@ Runtime integrations:
 - `VERCEL_API_TOKEN`
 - `VERCEL_TEAM_ID`
 - `VERCEL_PROJECT_ID`
+- `CRON_SECRET`
 
 ## Screenshots
 

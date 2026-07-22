@@ -47,12 +47,15 @@ Optional application secrets:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `MONITORING_API_KEY`
+- `CRON_SECRET`
 - `UPSTASH_REDIS_REST_URL`
 - `UPSTASH_REDIS_REST_TOKEN`
 
 `/api/health` is a readiness check. It returns `degraded` when Supabase is configured but unreachable, and `ok` when Supabase is either reachable or intentionally not configured.
 
 Vercel Web Analytics is enabled on the project for lightweight production usage visibility.
+
+`vercel.json` also registers a daily production cron job at `/api/cron/supabase-heartbeat`. The route is protected by `CRON_SECRET` and refreshes Supabase telemetry as a fallback to the six-hour GitHub Actions heartbeat.
 
 ## Docker
 

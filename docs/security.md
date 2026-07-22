@@ -8,11 +8,13 @@
 - CodeQL scans JavaScript and TypeScript on pushes, pull requests, and schedule.
 - API routes emit trace IDs and structured response envelopes.
 - Monitoring routes include rate limiting, API-key guard support, RBAC simulation, and audit logs.
+- The Vercel Cron heartbeat route requires `Authorization: Bearer <CRON_SECRET>`.
 
 ## Boundaries
 
 - Supabase service-role keys are server-only.
 - Vercel API tokens are stored as Vercel and GitHub secrets, not source files.
+- `CRON_SECRET` is stored as a Vercel environment variable, not source code.
 - Public dashboard mode avoids privileged write actions.
 
 ## Remaining Production Hardening

@@ -34,3 +34,12 @@ The incident timeline merges deploys, logs, alerts, and incident records into on
 ## Tracing
 
 Every API response includes a trace ID in both the JSON `meta` payload and `x-trace-id` response header. Logs are emitted as structured JSON so they can be shipped into a log platform later.
+
+## Telemetry Freshness
+
+Supabase-backed telemetry is refreshed automatically by two scheduler paths:
+
+- GitHub Actions runs `npm run heartbeat:supabase` every six hours.
+- Vercel Cron invokes `/api/cron/supabase-heartbeat` once per day in production.
+
+Both paths update the same bounded daily heartbeat log row and service metric timestamps, so readiness can detect stale telemetry without growing the log table unnecessarily.
